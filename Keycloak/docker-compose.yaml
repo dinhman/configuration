@@ -21,7 +21,11 @@ services:
     container_name: keycloak
     restart: always
     ports:
+<<<<<<< HEAD
       - "8081:8080"
+=======
+      - "8081:8081"
+>>>>>>> c5ac814d9b9583d78d463c6c83cb11774f418d19
       - "8443:8443"
     depends_on:
       - postgres
