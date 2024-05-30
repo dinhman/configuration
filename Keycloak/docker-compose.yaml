@@ -16,11 +16,11 @@ services:
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
       POSTGRES_DB: $POSTGRES_DB
   keycloak:
-    image: quay.io/keycloak/keycloak:22.0.5
+    image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
     restart: always
     ports:
-      - "8080:8080"
+      - "8081:8081"
       - "8443:8443"
     depends_on:
       - postgres
