@@ -1,2 +1,8 @@
 PID = 1
 Exited = 0 (Exited = 137)
+
+
+docker run -it 
+-i --interactive
+-t --tty (TeleTypewriter)
+Ctrl + D to exit 
