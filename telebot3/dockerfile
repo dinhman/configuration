@@ -1,0 +1,23 @@
+
+FROM python:3.12
+
+
+WORKDIR /app
+
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+
+ENV TELEGRAM_BOT_TOKEN=7256330987:AAEGw3ldYU9uXR9VHNedf910UbsPhQWM4rE
+ENV DB_SERVER=172.16.1.10
+ENV DB_USER=man.dinh
+ENV DB_PASSWORD=QTcC82HDzvJh
+ENV DB_NAME=localDB
+ENV SFTP_HOST=119.82.135.233
+ENV SFTP_PORT=2022
+ENV SFTP_USER=man.dinh
+ENV SFTP_PASSWORD=ucLMYXTr433nungv
+
+
+CMD ["python", "main.py"]

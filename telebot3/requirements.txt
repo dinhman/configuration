@@ -1,0 +1,8 @@
+python-dotenv
+pyodbc
+paramiko
+pillow
+pandas
+python-telegram-bot
+sqlalchemy
+pymssql
