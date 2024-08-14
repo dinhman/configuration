@@ -8,6 +8,7 @@ import speedtest  # Nhập thư viện speedtest
 import requests
 from ports import load_ports, find_port_info
 from http_utils import load_http_codes, get_http_code_info 
+from email_utils import send_email
 
 http_data = load_http_codes('http.codes.json') 
 load_dotenv()
@@ -121,6 +122,48 @@ class SkypeListener(SkypeEventLoop):
 
                 elif message_content == "it tools":       
                     self.Group.sendMsg("Check more IT tools in https://it-tools.tech/")
+
+                elif message_content.startswith("send email"):
+                    try:
+                        # Tách thông tin từ tin nhắn
+                        lines = message_content.split("\n")
+                        to_email = ""
+                        subject = ""
+                        body = ""
+
+                        for line in lines:
+                            if line.startswith("to:"):
+                                to_email = line[len("to:"):].strip()  # Lấy địa chỉ email
+                            elif line.startswith("sub:"):
+                                subject = line[len("sub:"):].strip()  # Lấy chủ đề email
+                            elif line.startswith("mess:"):
+                                body = line[len("mess:"):].strip()  # Lấy nội dung email
+
+                        # Gửi email nếu tất cả thông tin đã được cung cấp
+                        if to_email and subject and body:
+                            send_email(subject, body, to_email)  # Gọi hàm gửi email
+                            event.msg.chat.sendMsg("Email đã được gửi thành công!")  # Gửi thông báo thành công
+                        else:
+                            event.msg.chat.sendMsg("Vui lòng cung cấp đầy đủ thông tin (to, sub, mess).")
+
+                    except Exception as e:
+                        event.msg.chat.sendMsg(f"Đã xảy ra lỗi khi gửi email: {e}")
+
+                        
+                    # try:
+                    #     # Tách thông tin từ tin nhắn
+                    #     parts = message_content[len("send email "):].strip().split("|")
+                    #     to_email = parts[0].strip()  # Địa chỉ email
+                    #     subject = parts[1].strip()     # Chủ đề email
+                    #     body = parts[2].strip()        # Nội dung email
+                        
+                    #     send_email(subject, body, to_email)  # Gọi hàm gửi email
+                    #     event.msg.chat.sendMsg("Email đã được gửi!")  # Thông báo thành công
+                    # except IndexError:
+                    #     event.msg.chat.sendMsg("Vui lòng cung cấp địa chỉ email, chủ đề và nội dung theo định dạng: send email <email>|<subject>|<body>")
+                    # except Exception as e:
+                    #     event.msg.chat.sendMsg(f"Đã xảy ra lỗi khi gửi email: {e}")
+
 
     def ping_all_hosts(self):
         results = []
