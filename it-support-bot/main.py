@@ -5,6 +5,9 @@ from skpy import SkypeEventLoop, SkypeNewMessageEvent
 from icmplib import ping
 import subprocess
 import speedtest  # Nhập thư viện speedtest
+import requests
+from ports import load_ports, find_port_info
+
 
 load_dotenv()
 
@@ -72,6 +75,28 @@ class SkypeListener(SkypeEventLoop):
                     results = self.speed_test()
                     event.msg.chat.sendMsg(results)
 
+                elif message_content.startswith("my ip"):
+                    ip_address = self.get_public_ip()
+                    self.Group.sendMsg(f"Your public IP address is: {ip_address}")
+                
+            # Kiểm tra port
+                elif message_content.startswith("check port "):
+                    port_number = message_content[len("check port "):].strip()  # Lấy số port
+                    if port_number.isdigit():
+                        data = load_ports("ports.lists.json")  # Load dữ liệu từ file JSON
+                        port_info = find_port_info(data, port_number)  # Tìm kiếm thông tin port
+                        if port_info:
+                            response = (f"Port: {port_info['port']}\n"
+                                        f"Mô tả: {port_info['description']}\n"
+                                        f"UDP: {port_info['udp']}\n"
+                                        f"Trạng thái: {port_info['status']}\n"
+                                        f"TCP: {port_info['tcp']}")
+                        else:
+                            response = f"Không tìm thấy thông tin cho port: {port_number}"
+                    else:
+                        response = "Vui lòng nhập một số port hợp lệ."
+                    event.msg.chat.sendMsg(response)
+
                 elif message_content == "hello":
                     self.Group.sendMsg("Hello ! I'm IT Support...")
                 
@@ -99,6 +124,7 @@ class SkypeListener(SkypeEventLoop):
                 return f"{host} is not reachable."
         except Exception as e:
             return f"Error pinging {host}: {e}"
+    
     def tracert_host(self, host):
         try:
             print(f"Tracing route to {host}...")  # Debug statement
@@ -125,6 +151,19 @@ class SkypeListener(SkypeEventLoop):
                     f"Ping: {ping_result:.2f} ms")
         except Exception as e:
             return f"Error performing speed test: {e}"
+        
+    def get_public_ip(self):
+        try:
+            response = requests.get("https://api.ipify.org?format=json")
+            response.raise_for_status()  # Kiểm tra lỗi HTTP
+            ip_data = response.json()
+            
+            print(f"Received JSON response: {ip_data}")  # Debug line
+            
+            return ip_data["ip"]  # Trả về địa chỉ IP
+        except requests.exceptions.RequestException as e:
+            return f"Error retrieving public IP: {e}"
+
 
 if __name__ == "__main__":
     my_skype = SkypeListener()
