@@ -9,6 +9,8 @@ import requests
 from ports import load_ports, find_port_info
 from http_utils import load_http_codes, get_http_code_info 
 from email_utils import send_email
+from database import insert_user, delete_user
+
 
 http_data = load_http_codes('http.codes.json') 
 load_dotenv()
@@ -60,17 +62,12 @@ class SkypeListener(SkypeEventLoop):
                         host = hosts[host_name]
                         results = self.tracert_host(host)
                         event.msg.chat.sendMsg(results)
-                    # else:
-                    #     event.msg.chat.sendMsg(f"Unknown host: {host_name}. Available hosts: {', '.join(hosts.keys())}")
+            
 
                 elif message_content.startswith("ping "):
-                    host_name = message_content.split(" ", 1)[1]
-                    if host_name in hosts:
-                        host = hosts[host_name]
-                        results = self.ping_single_host(host)
-                        event.msg.chat.sendMsg(results)
-                    else:
-                        event.msg.chat.sendMsg(f"Unknown host: {host_name}. Available hosts: {', '.join(hosts.keys())}")
+                    host_name = message_content[len("ping "):].strip()  # Lấy tên host từ tin nhắn
+                    results = self.ping_single_host(host_name)  # Gọi hàm ping
+                    event.msg.chat.sendMsg(results)  # Gửi kết quả ping về nhóm
 
                 elif message_content.startswith("speed test"):
                     self.Group.sendMsg("Testing...")
@@ -149,20 +146,45 @@ class SkypeListener(SkypeEventLoop):
                     except Exception as e:
                         event.msg.chat.sendMsg(f"Đã xảy ra lỗi khi gửi email: {e}")
 
+                elif message_content.startswith("insert "):
+                    try:
+                        # Tách thông tin từ tin nhắn
+                        parts = message_content[len("insert "):].strip().split(",")
                         
-                    # try:
-                    #     # Tách thông tin từ tin nhắn
-                    #     parts = message_content[len("send email "):].strip().split("|")
-                    #     to_email = parts[0].strip()  # Địa chỉ email
-                    #     subject = parts[1].strip()     # Chủ đề email
-                    #     body = parts[2].strip()        # Nội dung email
+                        # Kiểm tra số lượng phần tử trong parts
+                        if len(parts) < 4:
+                            raise ValueError("Vui lòng cung cấp đầy đủ thông tin: tên người dùng, Skype ID, GetSMS và DCA.")
                         
-                    #     send_email(subject, body, to_email)  # Gọi hàm gửi email
-                    #     event.msg.chat.sendMsg("Email đã được gửi!")  # Thông báo thành công
-                    # except IndexError:
-                    #     event.msg.chat.sendMsg("Vui lòng cung cấp địa chỉ email, chủ đề và nội dung theo định dạng: send email <email>|<subject>|<body>")
-                    # except Exception as e:
-                    #     event.msg.chat.sendMsg(f"Đã xảy ra lỗi khi gửi email: {e}")
+                        # Tách tên người dùng và Skype ID
+                        crm_user = parts[0].strip()  # Tên người dùng
+                        skype_user = parts[1].strip()  # Skype ID
+                        
+                        # Chuyển đổi GetSMS từ chuỗi sang số nguyên
+                        try:
+                            get_sms = int(parts[2].strip())  # GetSMS
+                        except ValueError:
+                            raise ValueError("GetSMS phải là một số nguyên.")
+                        
+                        dca = parts[3].strip()  # DCA
+
+                        # Gọi hàm chèn người dùng
+                        result = insert_user(crm_user, skype_user, get_sms, dca)
+                        event.msg.chat.sendMsg(result)  # Gửi thông báo thành công
+                    except Exception as e:
+                        event.msg.chat.sendMsg(f"Đã xảy ra lỗi: {e}")
+
+
+
+                elif message_content.startswith("delete user "):
+                    try:
+                        # Tách tên người dùng từ tin nhắn
+                        crm_user = message_content[len("delete "):].strip()  # Tên người dùng
+
+                        # Gọi hàm xóa người dùng
+                        result = delete_user(crm_user)
+                        event.msg.chat.sendMsg(result)  # Gửi thông báo thành công
+                    except Exception as e:
+                        event.msg.chat.sendMsg(f"Đã xảy ra lỗi: {e}")
 
 
     def ping_all_hosts(self):
