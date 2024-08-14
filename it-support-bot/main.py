@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from skpy import SkypeEventLoop, SkypeNewMessageEvent
 from icmplib import ping
 import subprocess
+import speedtest  # Nhập thư viện speedtest
 
 load_dotenv()
 
@@ -66,8 +67,13 @@ class SkypeListener(SkypeEventLoop):
                     else:
                         event.msg.chat.sendMsg(f"Unknown host: {host_name}. Available hosts: {', '.join(hosts.keys())}")
 
+                elif message_content.startswith("speed test"):
+                    self.Group.sendMsg("Testing...")
+                    results = self.speed_test()
+                    event.msg.chat.sendMsg(results)
+
                 elif message_content == "hello":
-                    self.Group.sendMsg("Xin chào! Tôi là IT Helpdesk...")
+                    self.Group.sendMsg("Hello ! I'm IT Support...")
                 
                 elif message_content == "list hosts":
                 # Tạo danh sách các host với địa chỉ IP
@@ -78,12 +84,14 @@ class SkypeListener(SkypeEventLoop):
         results = []
         for name, host in hosts.items():
             print(f"Pinging {name} ({host})...")  # Debug statement
+            self.Group.sendMsg("Pinging...")
             results.append(self.ping_single_host(host))
         return "\n".join(results)
 
     def ping_single_host(self, host):
         try:
             print(f"Pinging {host}...")  # Debug statement
+            self.Group.sendMsg("Pinging...")
             response = ping(host, count=4, timeout=2)
             if response.is_alive:
                 return f"{host} is reachable, avg round-trip time: {response.avg_rtt:.2f} ms"
@@ -94,6 +102,7 @@ class SkypeListener(SkypeEventLoop):
     def tracert_host(self, host):
         try:
             print(f"Tracing route to {host}...")  # Debug statement
+            self.Group.sendMsg("Tracing...")
             # Use subprocess to run the tracert command
             result = subprocess.run(['tracert', host], capture_output=True, text=True)
             if result.returncode == 0:
@@ -103,6 +112,20 @@ class SkypeListener(SkypeEventLoop):
         except Exception as e:
             return f"Error performing tracert on {host}: {e}"
         
+    def speed_test(self):
+        try:
+            st = speedtest.Speedtest()
+            st.get_best_server()  # Tìm máy chủ tốt nhất
+            download_speed = st.download() / 1_000_000  # Chuyển đổi từ bps sang Mbps
+            upload_speed = st.upload() / 1_000_000  # Chuyển đổi từ bps sang Mbps
+            ping_result = st.results.ping
+            
+            return (f"Download speed: {download_speed:.2f} Mbps\n"
+                    f"Upload speed: {upload_speed:.2f} Mbps\n"
+                    f"Ping: {ping_result:.2f} ms")
+        except Exception as e:
+            return f"Error performing speed test: {e}"
+
 if __name__ == "__main__":
     my_skype = SkypeListener()
     my_skype.loop()
