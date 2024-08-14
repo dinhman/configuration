@@ -7,8 +7,9 @@ import subprocess
 import speedtest  # Nhập thư viện speedtest
 import requests
 from ports import load_ports, find_port_info
+from http_utils import load_http_codes, get_http_code_info 
 
-
+http_data = load_http_codes('http.codes.json') 
 load_dotenv()
 
 username_skp = os.getenv('SKYPE_USER')
@@ -97,6 +98,19 @@ class SkypeListener(SkypeEventLoop):
                         response = "Vui lòng nhập một số port hợp lệ."
                     event.msg.chat.sendMsg(response)
 
+                elif message_content.startswith("check http code "):
+                    code_key = message_content[len("check http code "):].strip()  # Lấy mã từ tin nhắn
+                    message, description = get_http_code_info(http_data, code_key)  # Trích xuất thông tin
+                    if message:
+                        self.Group.sendMsg(f"Mã: {code_key}\n Nội dung: {message}\n Mô tả: {description}")
+                    else:
+                        self.Group.sendMsg(f"Mã {code_key} không có trong file JSON.")
+
+                elif message_content == "random pass":
+                    password = self.random_password()
+                    self.Group.sendMsg(f"Mật khẩu ngẫu nhiên của bạn: {password}")
+
+
                 elif message_content == "hello":
                     self.Group.sendMsg("Hello ! I'm IT Support...")
                 
@@ -104,6 +118,9 @@ class SkypeListener(SkypeEventLoop):
                 # Tạo danh sách các host với địa chỉ IP
                     host_list = "\n".join([f"{name}: {host}" for name, host in hosts.items()])
                     self.Group.sendMsg(f"List of hosts:\n{host_list}")  # Gửi tin nhắn với danh sách host
+
+                elif message_content == "it tools":       
+                    self.Group.sendMsg("Check more IT tools in https://it-tools.tech/")
 
     def ping_all_hosts(self):
         results = []
@@ -163,8 +180,21 @@ class SkypeListener(SkypeEventLoop):
             return ip_data["ip"]  # Trả về địa chỉ IP
         except requests.exceptions.RequestException as e:
             return f"Error retrieving public IP: {e}"
-
-
+        
+    def random_password(self):
+        url = "https://api.api-ninjas.com/v1/passwordgenerator"
+        headers = {
+            "X-Api-Key": "WaLCyspzoUafs0q/8l8M2w==WyGcirotAv61xw1W"
+        }
+        
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()  # Kiểm tra lỗi HTTP
+            password_data = response.json()
+            return password_data.get('random_password', 'Không thể tạo mật khẩu.')
+        except requests.exceptions.RequestException as e:
+            return f"Error generating password: {e}"
+            
 if __name__ == "__main__":
     my_skype = SkypeListener()
     my_skype.loop()
