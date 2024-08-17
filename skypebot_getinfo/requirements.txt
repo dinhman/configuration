@@ -1,0 +1,9 @@
+pandas
+paramiko
+Pillow
+python-dotenv
+pymssql
+python-docx
+docx2pdf
+sqlalchemy
+skpy
