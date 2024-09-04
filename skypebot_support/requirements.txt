@@ -1,0 +1,6 @@
+skpy
+python-dotenv
+icmplib
+speedtest-cli
+requests
+pymssql
